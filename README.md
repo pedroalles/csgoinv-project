@@ -1,7 +1,7 @@
 # CSGOInv App Project
   Desktop App for viewing and storing Steam Counter-Strike: Global Offensive inventory prices.
   
-  Inventory items and their prices are obtained through csgobackpack.net.
+  Inventory items and their prices are obtained through [csgobackpack.net](https://csgobackpack.net/).
   
   The page's html is obtained using the <strong>Requests</strong> module.
   
