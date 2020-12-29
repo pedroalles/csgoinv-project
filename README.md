@@ -11,7 +11,9 @@
   * Finally, the data is displayed in a GUI using the <strong>Tkinter</strong> module.
             
      
-  <kbd>
-  <p align="left">
-  <img src="img/csgoinv.png">
-  </p></kbd>
+
+  <table><tr><td>
+    <p align="left">
+      <img src="img/csgoinv.png">
+    </p>
+  </td></tr></table>
