@@ -17,3 +17,6 @@
       <img src="img/csgoinv.png">
     </p>
   </td></tr></table>
+
+
+  <kbd><img src="img/csgoinv.png"></kbd>
