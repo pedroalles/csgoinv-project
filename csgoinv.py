@@ -4,17 +4,35 @@ from bs4 import BeautifulSoup
 from tkinter import *
 from tkinter import ttk
 
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.dates as md
+from matplotlib.figure import Figure
+from matplotlib import ticker
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+matplotlib.use("TkAgg")
+
+# from dateutil import parser
+# import PyQt5
+# import pylab
+
 import sqlite3
 import time
 import datetime
+import threading
 
 ########################################################################################
+
+t_start = time.time()
 
 URL = 'https://csgobackpack.net/?nick=pedroalles&currency=BRL'
 
 page = requests.get(URL, headers={})
+# print("request done")
 table = pd.read_html(page.text)
+# print("table done")
 table_df = pd.DataFrame(table[0])
+# print("table df done")
 table_final = pd.DataFrame()
 
 soup = BeautifulSoup(page.content, 'html.parser')
@@ -62,6 +80,124 @@ dataentry()
 
 ########################################################################################
 
+def createNewWindow():
+    global newWindow
+
+    try:
+        newWindow.destroy()
+    except:
+        pass
+    
+    newWindow = Toplevel(root)
+
+    newWindow.attributes('-alpha', 0.0)  # make window transparent
+
+    # newWindow.bind('<Escape>', onclick3)
+    newWindow.title('Inventory Graph')
+    newWindow.resizable(False, False)
+    newWindow.configure(bg='black')
+    # window_height = 690
+    # window_width = 1200
+    # screen_width = newWindow.winfo_screenwidth()
+    # screen_height = newWindow.winfo_screenheight()
+    # x_cordinate = int((screen_width/2) - (window_width/2))
+    # y_cordinate = int((screen_height/2) - (window_height/2))
+    # newWindow.geometry("{}x{}+{}+{}".format(window_width, window_height, x_cordinate, 0))
+    newWindow.state('zoomed')
+    graph_data()    
+
+def graph_thread():
+    graph_t= threading.Thread(name="Graph Thread",target=createNewWindow)
+    graph_t.daemon = True
+    graph_t.start()
+
+def graph_data():
+    global datenums
+    global fig 
+    global datas_plot
+    global qntd_plot
+    global valores_plot
+
+    conection = sqlite3.connect('INV_doG.db')  # criando conexao com o servidor
+    c = conection.cursor()  # criando o cursor
+    c.execute("SELECT stemp FROM dados")
+    datas = c.fetchall()
+    c.execute('SELECT valor FROM dados')
+    valores_ = c.fetchall()
+    c.execute('SELECT quantidade FROM dados')
+    quantidade_ = c.fetchall()
+
+    qtd_ = []
+    qntd_plot = []
+    dat_ = []
+    datas_plot = []
+    vals_ = []
+    valores_plot = []
+
+    for cont, i in enumerate(datas):
+        dat_.append(i)
+        datas_plot.append(str(dat_[cont][0]).strip(','))
+        vals_.append(valores_[cont])
+        valores_plot.append(str(vals_[cont][0]).strip(','))
+        qtd_.append(quantidade_[cont])
+        qntd_plot.append(str(qtd_[cont][0]).strip(','))
+
+    
+    for cont, i in enumerate(datas_plot):
+        datas_plot[cont]=float(datas_plot[cont])
+        #print(type(um_[cont]))
+        valores_plot[cont]=float(valores_plot[cont])
+        qntd_plot[cont]=int(qntd_plot[cont])
+
+    dates=[datetime.datetime.fromtimestamp(ts) for ts in datas_plot]
+    datenums=md.date2num(dates)
+        
+    fig = Figure(figsize=(13, 6), dpi=100, facecolor="black", edgecolor="blue" )
+    ax = fig.add_subplot()
+    ax2 = fig.add_subplot()
+    fig.autofmt_xdate(rotation=30)
+    xfmt = md.DateFormatter('%d-%m-%Y')
+    ax.xaxis.set_major_formatter(xfmt)
+    formatter = ticker.FormatStrFormatter('R$%1.2f')
+    ax.yaxis.set_major_formatter(formatter)
+    ax2 = ax.twinx()
+    formatter = ticker.FormatStrFormatter('%1.0f')
+    ax2.yaxis.set_major_formatter(formatter)
+    ax2.plot(datenums,valores_plot, linewidth=0.5)
+    ax2.plot(datenums,qntd_plot, linewidth=0.5)
+
+    ax2.spines['bottom'].set_color('gray')
+    ax2.spines['top'].set_color('gray') 
+    #ax.spines['right'].set_color('red')
+    #ax.spines['left'].set_color('red')
+
+    ax.tick_params(axis='x', colors='gray')
+    ax.tick_params(axis='y', colors='gray')
+    ax2.tick_params(axis='x', colors='gray')
+    ax2.tick_params(axis='y', colors='gray')
+
+    ax.patch.set_facecolor('black')
+    #ax.set_xlabel('Data')
+    #ax.set_ylabel('Valor')
+    #ax.title.set_text('Valor x Tempo')
+    ax.grid(color='gray', linestyle='-', linewidth=0.2,axis='y')
+
+    t0, = ax.plot(datenums, valores_plot, linewidth=0.5)
+    t1, = ax.plot(datenums, qntd_plot, linewidth=0.5)
+
+    fig.legend((t0, t1), ('Inventory Value', 'Item Amount'), 'upper center')
+    canvas = FigureCanvasTkAgg(fig, newWindow)
+    canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=True)
+
+    tollbar = NavigationToolbar2Tk(canvas, newWindow)
+    tollbar.update()
+    canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=True)
+
+    # newWindow.deiconify()
+    newWindow.after(350, newWindow.attributes, "-alpha", 1.0)  # back to normal
+
+########################################################################################
+
 color_border = 'gray10'
 color_inside = 'gray6'
 color_effect = 'SteelBlue2'
@@ -73,7 +209,7 @@ root.configure(bg=color_border)
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
-window_height = 700
+window_height = 690
 window_width = 650
 
 x_cordinate = int((screen_width/2) - (window_width/2))
@@ -83,7 +219,7 @@ root.geometry("+{}+{}".format(x_cordinate, 0))
 root.resizable(False, False)
 
 my_top_frame = Frame(root, bg=color_border)
-my_top_frame.pack(pady=(5,0), padx=(5), fill=X)
+my_top_frame.pack(pady=(10,0), padx=(0))
 
 label_name = Label(my_top_frame, text="User Name" , width=10, font=('bold',11), fg="white", bg=color_border)
 label_name.pack(side=LEFT, expand=1, ipady=1)
@@ -106,8 +242,11 @@ quant_total = StringVar()
 entry_quant = Entry(my_top_frame, textvariable=quant_total, borderwidth=4, width=10, justify=CENTER, font=('bold',11), fg="white", bg=color_inside)
 entry_quant.pack(side=LEFT, expand=1, ipady=1)
 
+bt_graph = Button(my_top_frame, text="Graph", justify='center', borderwidth=3, bg=color_effect, command=graph_thread, font=('bold',10), fg="black")
+bt_graph.pack(side=LEFT, expand=1, ipady=0, padx=(10,10))
+
 my_frame = Frame(root)
-my_frame.pack(pady=(5,5), padx=(5))
+my_frame.pack(pady=(5,10), padx=(0))
 
 tree_scroll = Scrollbar(my_frame)
 tree_scroll.pack(side=RIGHT, fill=Y)
@@ -175,5 +314,8 @@ df_rows = table_final.to_numpy().tolist()
 for row in df_rows:
     my_tree.insert("", "end", values=row)
 
+t_end = time.time()
+
+print(f"Execution (seconds): {t_end - t_start:0.2f}")
 
 root.mainloop()

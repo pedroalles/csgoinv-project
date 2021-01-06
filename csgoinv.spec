@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['csgoinv.py'],
-             pathex=['D:\\Projetos\\csinvlogger'],
+             pathex=['C:\\_p\\csgoinv\\CsGoInv-project'],
              binaries=[],
              datas=[],
              hiddenimports=[],
