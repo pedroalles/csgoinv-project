@@ -10,3 +10,7 @@ Inventory items and their prices are obtained through <a href="https://csgobackp
 	* Finally, the data is displayed in a GUI using the <strong>Tkinter</strong> module.
 	
 <kbd><img src="img/csgoinv.png"></kbd>
+
+* Graph of total inventory value and amount of items:
+
+<kbd><img src="img/graph.png"></kbd>
